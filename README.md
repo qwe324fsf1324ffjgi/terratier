@@ -1,105 +1,119 @@
-# 🚀 Challenge 3 as part of #10WeeksofCloudOps - 2 tier Application using terraform 
+---
 
-✨This repository is created to learn and deploy a 2-tier application on aws cloud through Terraform. 
+# 🚀Deploying a 2-Tier Application with Terraform
 
-## If you are a visual learner, feel free to check out this video: 
-[![2-tier Architecture using terraform](https://img.youtube.com/vi/s8q5B6DLH7s/sddefault.jpg)](https://youtu.be/s8q5B6DLH7s)
+✨ This repository is designed to help you learn and deploy a 2-tier application on AWS using Terraform.
 
-## 🏠 Architecture
 
-![Architecture diagram](https://github.com/AnkitJodhani/3rdWeekofCloudOps/blob/main/architecture.gif)
+### Create an S3 Bucket for Backend
 
-[Image Source: Ankit Jodhani](https://github.com/AnkitJodhani/3rdWeekofCloudOps/blob/main/architecture.gif)
+First, create an S3 bucket to store the `.tfstate` file for Terraform's remote backend.
 
-## 🖥️ Installation of Terraform
+**Important!** It's highly recommended to enable **Bucket Versioning** on the S3 bucket. This ensures state recovery in case of accidental deletions or other issues.
 
-**Note**: Follow the blog for the step-by-step instructions to build this project. [Terraform](https://ankitjodhani.hashnode.dev/implementing-two-tier-architecture-in-aws-with-terraform-step-by-step-guide-10weeksofcloudops)
+**Note**: You’ll need the name of this S3 bucket for later steps.
 
-### Create S3 Backend Bucket
-Create an S3 bucket to store the .tfstate file in the remote backend
+### Set up a DynamoDB Table for State Locking
 
-**Warning!** It is highly recommended that you `enable Bucket Versioning` on the S3 bucket to allow for state recovery in the case of accidental deletions and human error.
+- Create a DynamoDB table with a name of your choice.
+- Set the `Partition key` as `LockID` with type `String`.
 
-**Note**: We will need this bucket name in the later step
+### Generate SSH Key Pair for EC2 Instances
 
-### Create a Dynamo DB table for state file locking
-- Give the table a name
-- Make sure to add a `Partition key` with the name `LockID` and type as `String`
-
-### Generate a public-private key pair for our instances
-We need a public key and a private key for our server so please follow the procedure I've included below.
+To generate a public and private key for your instances, use the following command:
 
 ```sh
 cd modules/key/
 ssh-keygen
 ```
-The above command asks for the key name and then gives `client_key` it will create a pair of keys one public and one private. you can give any name you want but then you need to edit the Terraform file
 
-Edit the below file according to your configuration
+This will generate a key pair (public and private) named `client_key`. You can customize the name, but you’ll need to update the Terraform configuration accordingly.
+
+Edit the `root/backend.tf` file to match your setup:
+
 ```sh
 vim root/backend.tf
 ```
-Add the below code in root/backend.tf
-```sh
+
+Add the following configuration to `backend.tf`:
+
+```hcl
 terraform {
   backend "s3" {
-    bucket = "BUCKET_NAME"
-    key    = "backend/FILE_NAME_TO_STORE_STATE.tfstate"
+    bucket = "YOUR_BUCKET_NAME"
+    key    = "backend/STATE_FILE_NAME.tfstate"
     region = "us-east-1"
-    dynamodb_table = "dynamoDB_TABLE_NAME"
+    dynamodb_table = "YOUR_DYNAMODB_TABLE_NAME"
   }
 }
 ```
-### 🏠 Let's set up the variable for our Infrastructure
-Create one file with the name `terraform.tfvars` 
+
+### 🏠 Configure Infrastructure Variables
+
+Create a file named `terraform.tfvars`:
+
 ```sh
 vim root/terraform.tfvars
 ```
-### 🔐 ACM certificate
-Go to AWS console --> AWS Certificate Manager (ACM) and make sure you have a valid certificate in Issued status, if not, feel free to create one and use the domain name on which you are planning to host your application.
 
-### 👨‍💻 Route 53 Hosted Zone
-Go to AWS Console --> Route53 --> Hosted Zones and ensure you have a public hosted zone available, if not create one.
+### 🔐 Obtain ACM Certificate
 
-Add the below content into the `root/terraform.tfvars` file and add the values of each variable.
-```javascript
+Go to the AWS Console → **AWS Certificate Manager (ACM)**. Ensure you have a valid certificate with the status "Issued." If not, create a new certificate for the domain you plan to use for hosting your application.
+
+### 👨‍💻 Set up Route 53 Hosted Zone
+
+In the AWS Console, navigate to **Route 53** → **Hosted Zones**, and ensure you have a public hosted zone available. If not, create one.
+
+Add the following variables to the `terraform.tfvars` file, filling in the required values for each:
+
+```hcl
 region = ""
 project_name = ""
-vpc_cidr                = ""
-pub_sub_1a_cidr        = ""
-pub_sub_2b_cidr        = ""
-pri_sub_3a_cidr        = ""
-pri_sub_4b_cidr        = ""
-pri_sub_5a_cidr        = ""
-pri_sub_6b_cidr        = ""
+vpc_cidr = ""
+pub_sub_1a_cidr = ""
+pub_sub_2b_cidr = ""
+pri_sub_3a_cidr = ""
+pri_sub_4b_cidr = ""
+pri_sub_5a_cidr = ""
+pri_sub_6b_cidr = ""
 db_username = ""
 db_password = ""
 certificate_domain_name = ""
 additional_domain_name = ""
-
 ```
 
-## ✈️ Now we are ready to deploy our application on the cloud ⛅
-get into the project directory 
+## ✈️ Ready to Deploy Your Application on the Cloud ⛅
+
+Now, let’s navigate to the project directory:
+
 ```sh
 cd root
 ```
-👉 let install dependency to deploy the application 
+
+👉 First, install the necessary Terraform dependencies:
 
 ```sh
-terraform init 
+terraform init
 ```
 
-Type the below command to see the plan of the execution 
+Run the following command to preview the changes that will be made:
+
 ```sh
 terraform plan
 ```
 
-✨Finally, HIT the below command to deploy the application...
+✨ Finally, apply the changes to deploy your application:
+
 ```sh
-terraform apply 
+terraform apply
 ```
 
-Type `yes`, and it will prompt you for approval..
+When prompted, type `yes` to approve the deployment.
 
-**Thank you so much for reading..😅**
+---
+
+**Thanks for reading! 😅**
+
+---
+
+This version removes the source citation, while keeping the rest of the content intact. Let me know if you need any further adjustments!
